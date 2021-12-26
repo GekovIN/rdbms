@@ -2,7 +2,7 @@
 
 ## DDL скрипты для PostgreSQL
 
-```
+```sql
 -- Создаем БД и пользователя от имени суперюзера postgres. Даем права на БД пользователю.
 
 DROP DATABASE IF EXISTS kitchen_delivery;
@@ -17,7 +17,7 @@ GRANT ALL PRIVILEGES ON DATABASE kitchen_delivery TO developer;
 ```
 ![image](https://user-images.githubusercontent.com/41448520/147409233-35337fb7-a619-4580-88b2-4df39bf18858.png)
 
-```
+```sql
 -- Создаем схему
 DROP SCHEMA IF EXISTS kitchen CASCADE;
 CREATE SCHEMA kitchen;
