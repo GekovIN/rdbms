@@ -114,3 +114,35 @@ select pg_size_pretty(pg_table_size('kitchen.order__number_index'));
 ![image](https://user-images.githubusercontent.com/41448520/149829702-4c399068-29ac-49d7-8445-fcdc0a0711b4.png)
 <br/>против<br/>
 ![image](https://user-images.githubusercontent.com/41448520/149829748-cbf78fa9-af84-4be1-a9f9-a152724a0e77.png)
+
+
+5. Составные индексы<br/>
+Предположим, что мы хотим иметь возможность искать по БД продукты, зная только название и цену
+```sql
+-- заполним таблицу product тестовыми данными
+truncate kitchen.product cascade;
+alter sequence kitchen.product_id_seq restart;
+
+insert into kitchen.product (id, name, price)
+SELECT i, 'product_' || i::text, 0
+FROM generate_series(1, 100000) AS t(i);
+
+DO
+$do$
+    BEGIN
+        FOR i IN 1..100000 LOOP
+                update kitchen.product set price = (SELECT floor(random() * 1000)::int) where id = i;
+            END LOOP;
+    END
+$do$;
+
+-- создаем составной индекс на поля name и price
+
+create index if not exists product_name_price_index on kitchen.product(name, price);
+
+-- смотрим на его работу
+explain select * from kitchen.product where name = 'product_3016' and price = 183.00;
+```
+Получаем Index Scan
+
+![image](https://user-images.githubusercontent.com/41448520/149831411-503b0a9e-74f0-49c5-afde-4b3f36a64943.png)
