@@ -83,3 +83,34 @@ explain select * from kitchen."order" where "order".status_lexeme @@ to_tsquery(
 Получаем Index Scan:
 
 ![image](https://user-images.githubusercontent.com/41448520/149827563-f22c75bc-6874-4dcf-93e5-67c6c8941f86.png)
+
+
+4. Создание частичного индекса<br/>
+  Предположим, что мы не видим смысла индексировать всю таблицу order, а только последние 5000 заказов
+  
+```sql
+-- создаем частичный индекс
+drop index if exists kitchen.order__number_index;
+create index if not exists order__number_index on kitchen."order" (order_number) where id > 95000;
+
+-- проверяем его работу
+explain select * from kitchen."order" where id > 95000 and order_number = 'order_95001';
+explain select * from kitchen."order" where id > 1000 and order_number = 'order_1001';
+```
+Для первого запроса Index Scan:
+![image](https://user-images.githubusercontent.com/41448520/149829544-859159b1-709b-41a0-ba67-8f57977de399.png)
+
+Для второго запроса Seq Scan:
+![image](https://user-images.githubusercontent.com/41448520/149829590-0a31ebd4-1071-47db-a212-804cd4642e44.png)
+
+```sql
+-- сравниваем размеры полного и частичного индексов 
+drop index if exists kitchen.order__number_index;
+-- create index if not exists order__number_index on kitchen."order" (order_number);
+create index if not exists order__number_index on kitchen."order" (order_number) where id > 95000;
+
+select pg_size_pretty(pg_table_size('kitchen.order__number_index'));
+```
+![image](https://user-images.githubusercontent.com/41448520/149829702-4c399068-29ac-49d7-8445-fcdc0a0711b4.png)
+<br/>против<br/>
+![image](https://user-images.githubusercontent.com/41448520/149829748-cbf78fa9-af84-4be1-a9f9-a152724a0e77.png)
