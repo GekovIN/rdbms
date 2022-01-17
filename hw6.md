@@ -39,4 +39,47 @@ FROM generate_series(1, 100000) AS t(i);
 explain select * from kitchen."order" where order_number = 'order_78375';
 
 ```
+Получаем Index Scan:
+
 ![image](https://user-images.githubusercontent.com/41448520/149820749-d270ae5c-a79a-4172-acac-f07ba9f43567.png)
+
+3. Полнотекстовой поиск <br/> 
+Предположим, что в поле order.status_reason будут хранится произвольные данные о состоянии выполнения заказа. В таком случае нам может понадобиться полнотекстовой поиск для поиска заказов по каким-либо ключевым словам из его статуса
+  ```sql
+-- Заполняем столбец status_reason различными рандомными значениями
+DO
+$do$
+    BEGIN
+        FOR i IN 1..99999 LOOP
+                update kitchen."order" set status_reason = (select (array['Заказ выполнен', 'Заказ в процессе'])[floor(random() * 2 + 1)]) where id = i;
+            END LOOP;
+    END
+$do$;
+
+-- Небольшой части записей добавим статус 'Произошла ошибка'
+DO
+$do$
+    BEGIN
+        FOR i IN 1..10 LOOP
+                update kitchen."order" set status_reason = 'Произошла ошибка' where id = (SELECT floor(random() * 100000 + 1)::int);
+            END LOOP;
+    END
+$do$;
+
+-- Создадим индекс на столбец status_reason
+-- создаем новую колонку для хранения tsvector
+alter table kitchen."order" add column status_lexeme tsvector;
+update kitchen."order" set status_lexeme = to_tsvector(status_reason);
+
+-- создаем сам индекс типа GIN
+drop index if exists kitchen.idx_gin_order_status_reason;
+create index idx_gin_order_status_reason
+    on kitchen."order"
+        using gin (status_lexeme);
+
+-- Пробуем найти все записи, у которых статус содержит слово 'ошибка'
+explain select * from kitchen."order" where "order".status_lexeme @@ to_tsquery('ошибка');
+```
+Получаем Index Scan:
+
+![image](https://user-images.githubusercontent.com/41448520/149827563-f22c75bc-6874-4dcf-93e5-67c6c8941f86.png)
