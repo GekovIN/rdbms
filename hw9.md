@@ -1,4 +1,4 @@
-# ДЗ 8
+# ДЗ 9
 ## Внутренняя архитектура СУБД MySQL 
 
 1. Подготавливаем скрипт init.sql для MySQL
@@ -172,4 +172,17 @@ create table if not exists user_address
    проверяем таблицы<br>
  ![image](https://user-images.githubusercontent.com/41448520/169650684-ee95a734-009c-4df4-9126-6b0c5f8e059f.png)
 
+4. Смотрим текущее значение inno_db_buffer_size<br>
+   ![image](https://user-images.githubusercontent.com/41448520/169881926-bebedb5e-2f4a-438b-9118-46385051bd5f.png)
 
+5. Считаем рекомендованное значение в Gb<br>
+   ![image](https://user-images.githubusercontent.com/41448520/169882342-9f236e4c-55ed-4ff7-8bad-4ebaf9cf1a9f.png)
+
+6. Выставляем в custom.conf/my.cfg 1Gb (на ВМ всего 2Gb)<br>
+   ![image](https://user-images.githubusercontent.com/41448520/169882842-f55b9e96-fbb6-4f2c-b69a-3862e3c0acb3.png)
+
+7. Перезапускаем контейнер и проверяем настройку<br>
+   ![image](https://user-images.githubusercontent.com/41448520/169883144-bfa11a8e-46a8-4fd8-8041-9e79f72e8c91.png)
+ 
+8. Установим и запустим sysbench
+   ![image](https://user-images.githubusercontent.com/41448520/169885778-f7b54e6b-b8e9-4b95-8888-00c573231108.png)
